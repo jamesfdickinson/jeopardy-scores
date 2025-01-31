@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <!-- Google Apps script is used to store the data in a google sheet -->
+    <!-- https://script.google.com/u/0/home/projects/1GMN2JLT6WFvHpyvFkUJbwHJrvw38iDXbuMHfrNIhpzbqGFv6F_vJBRkV/edit -->
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Jeopardy Scores</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            font-size: 1.25em;
+
+        }
+
+        header {
+            background-color: #060ce9;
+            color: white;
+            text-align: center;
+            padding: 10px;
+        }
+
+        main {
+            max-width: 400px;
+            margin: 0 auto;
+            padding: 10px 10px;
+        }
+
+        input[type="text"],
+        input[type="number"],
+        button {
+            width: 100%;
+            padding: 5px;
+            display: block;
+            font-size: 1.5em;
+        }
+
+        input[type="text"] {
+            border: none;
+            outline: none;
+            background: none;
+
+        }
+
+        .form {
+            display: flex;
+            flex-wrap: wrap;
+        }
+
+        .form>div {
+            display: flex;
+            align-items: center;
+            width: 100%;
+            margin: 3px 0px;
+        }
+
+        .form label {
+            width: 100px;
+            /* Set a fixed width for all labels */
+        }
+
+
+
+        .form button {
+            flex: 3;
+        }
+
+        .player .name {
+            flex: 3;
+        }
+
+        .player .score {
+            flex: 1;
+            text-align: center;
+        }
+
+        .player .final {
+            width: initial;
+        }
+
+        .player {
+            background-color: rgb(226, 226, 226);
+            /* rounded corners */
+            border-radius: 5px;
+            padding: 10px;
+            margin: 5px 0;
+        }
+
+        .players>:nth-child(6n+0) {
+            background-color: #115ff4;
+        }
+
+        .players>:nth-child(6n+1) {
+            background-color: rgb(195, 230, 167);
+        }
+
+        .players>:nth-child(6n+2) {
+            background-color: rgb(186, 167, 230);
+        }
+
+        .players>:nth-child(6n+3) {
+            background-color: rgb(230, 167, 186);
+        }
+
+        .players>:nth-child(6n+4) {
+            background-color: rgb(221, 230, 167);
+        }
+
+        .players>:nth-child(6n+5) {
+            background-color: rgb(177, 230, 167);
+        }
+        .errorMessage {
+            color: red;
+        }
+    </style>
+</head>
+
+<body>
+    <header>
+        <h1>Jeopardy Scores</h1>
+    </header>
+    <main>
+        <form id="scoreForm">
+            <div class="form">
+
+                <!-- episode input  -->
+                <div>
+                    <label for="episode">Episode</label>
+                    <input class="episode" type="text" id="episode" name="episode" placeholder="S40E01" required>
+                </div>
+            </div>
+            <hr>
+            <!-- a list of players having an input for name as a textbox, score as number with a large plus or and asmall minus, and final score as checkbox -->
+            <!-- a more button that can add more players -->
+            <div id="players" class="players">
+                <div class="form player">
+                    <div>
+                        <!-- <label for="">Name</label> -->
+                        <input class="name" type="text" name="name" required placeholder="Name">
+
+                        <label class="final"><input type="checkbox" name="final" />Final</label>
+                    </div>
+                    <div>
+                        <!-- <label for="">Score</label> -->
+
+
+                        <input class="score" type="number" name="score" required value="0">
+                        <button type="button" onclick="addScore()">+</button>
+
+
+                        <div>
+
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+            <hr>
+            <button type="button" onclick="addPlayer()">Add Player</button>
+            <!-- a submit button -->
+            <hr>
+            <button type="submit" onclick="submitScore()">Submit Score</button>
+            <!-- Message -->
+            <div id="message"></div>
+            <!-- Error Message -->
+            <div id="errorMessage" class="errorMessage"></div>
+        </form>
+    </main>
+    <footer>
+    </footer>
+    <script>
+        //add 1 score to the player
+        function addScore() {
+            //find score input and add 1
+            let scoreInput = event.target.previousElementSibling;
+            scoreInput.value = parseInt(scoreInput.value) + 1;
+
+        }
+
+        //add another player in the html
+        function addPlayer() {
+
+            //append raw html to the players div
+            let players = document.getElementById('players');
+            let newPlayerHTML = `
+                <div class="form player">
+                    <div>
+                        <!-- <label for="">Name</label> -->
+                        <input class="name" type="text" name="name" required placeholder="Name">
+                        
+                            <label><input type="checkbox" name="final" />Final</label>
+                    </div>
+                    <div>
+                        <!-- <label for="">Score</label> -->
+
+
+                        <input class="score" type="number" name="score" required value="0">
+                        <button type="button" onclick="addScore()">+</button>
+
+
+                        <div>
+
+                        </div>
+                    </div>
+                </div>
+            `;
+            players.insertAdjacentHTML("beforeend", newPlayerHTML);
+
+
+        }
+
+        //submit the score
+        async function submitScore() {
+            event.preventDefault(); // Prevent form submission
+            let form = document.getElementById('scoreForm');
+            const errorMessageDiv = document.getElementById('errorMessage');
+            const message = document.getElementById('message');
+
+            //clear error message
+            errorMessageDiv.innerHTML = '';
+            //clear message
+            message.innerHTML = '';
+
+            if (!form.checkValidity()) {
+                form.reportValidity(); // Show validation errors
+                console.log('Form is invalid');
+                return;
+            }
+
+            let timeStamp = new Date().getTime();
+            let episode = document.getElementById('episode').value;
+            let players = document.querySelectorAll('.player');
+            let scores = [];
+            players.forEach(player => {
+                let name = player.querySelector('.name').value;
+                let score = player.querySelector('input[type="number"]').value;
+                let final = player.querySelector('input[type="checkbox"]').checked;
+                scores.push({
+                    timeStamp: timeStamp,
+                    episode: episode,
+                    name: name,
+                    score: score,
+                    final: final
+                });
+            });
+
+            console.log(scores);
+
+            //send scores
+
+            // google.script.run.AddRecord(scores); 
+
+           
+            try {
+                //if host on google apps script, use google.script.run - check if url contains script.google.com
+                if (window.location.href.indexOf("script.google.com") > -1) {
+                    //use google.script.run
+                    google.script.run.AddRecord(scores);
+                }else{
+                     //send to google apps script as raw post as json
+                    await sendData(scores);
+                }
+            } catch (e) {
+                console.error('Error sending data:', e);
+                //show error message
+                errorMessage.innerHTML = 'Error submitting scores. Please try again later.';
+                return;
+            }
+
+
+            //remove the sumbit button and add a message
+            let submitButton = document.querySelector('button[type="submit"]');
+            //disable the submit button
+            submitButton.disabled = true;
+
+            message.innerHTML = 'Scores submitted';
+        }
+
+        async function sendData(data) {
+            //curl -L \
+            //'https://script.google.com/macros/s/AKfycbwwQpVjOfzktiKeKYsIVTJctagcGDY6AzrCsr70XIbTPlqDycNUDcWFYF1RbRYFnu1r-A/exec' \
+            //  --header 'Content-Type: application/json' \
+            //  --data-raw '[{  "timeStamp": 1,  "episode": 1,  "name": 1,  "score": 1,  "final": 1},{  "timeStamp": 5,  "episode": 7,  "name": 8,  "score": 7,  "final": 6}]'
+
+            await fetch('https://script.google.com/macros/s/AKfycbwwQpVjOfzktiKeKYsIVTJctagcGDY6AzrCsr70XIbTPlqDycNUDcWFYF1RbRYFnu1r-A/exec', {
+                redirect: "follow", //follow redirects - google apps script redirect to the actual url
+                method: 'POST',
+                headers: {
+                    'Content-Type': "text/plain;charset=utf-8", //'application/json' is not used to avoid CORS error on google apps script
+                },
+                body: JSON.stringify(data)
+            });
+        }
+
+
+    </script>
+</body>
+
+</html>
