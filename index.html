@@ -13,7 +13,7 @@
             margin: 0;
             padding: 0;
             font-size: 1.25em;
-
+            box-sizing: border-box;
         }
 
         header {
@@ -24,7 +24,7 @@
         }
 
         main {
-            max-width: 400px;
+            xmax-width: 400px;
             margin: 0 auto;
             padding: 10px 10px;
         }
@@ -35,7 +35,8 @@
             width: 100%;
             padding: 5px;
             display: block;
-            font-size: 1.5em;
+            font-size: 1.75em;
+            
         }
 
         input[type="text"] {
@@ -68,25 +69,11 @@
             flex: 3;
         }
 
-        .player .name {
-            flex: 3;
-        }
+        .players {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
 
-        .player .score {
-            flex: 1;
-            text-align: center;
-        }
-
-        .player .final {
-            width: initial;
-        }
-
-        .player {
-            background-color: rgb(226, 226, 226);
-            /* rounded corners */
-            border-radius: 5px;
-            padding: 10px;
-            margin: 5px 0;
+            grid-gap: 5px;
         }
 
         .players>:nth-child(6n+0) {
@@ -112,6 +99,37 @@
         .players>:nth-child(6n+5) {
             background-color: rgb(177, 230, 167);
         }
+
+        .player {}
+
+        .player .name {
+            flex: 3;
+        }
+
+        .player .score {
+            flex: 1;
+            text-align: center;
+        }
+
+        .player .final {
+            width: initial;
+        }
+
+        .player .addScore {
+            flex: 1;
+            font-size: 2em;
+        }
+
+        .player {
+            background-color: rgb(226, 226, 226);
+            /* rounded corners */
+            border-radius: 5px;
+            padding: 10px;
+            margin: 5px 0;
+        }
+
+
+
         .errorMessage {
             color: red;
         }
@@ -136,32 +154,34 @@
             <!-- a list of players having an input for name as a textbox, score as number with a large plus or and asmall minus, and final score as checkbox -->
             <!-- a more button that can add more players -->
             <div id="players" class="players">
+
                 <div class="form player">
                     <div>
                         <!-- <label for="">Name</label> -->
                         <input class="name" type="text" name="name" required placeholder="Name">
 
-                        <label class="final"><input type="checkbox" name="final" />Final</label>
+                        
                     </div>
                     <div>
                         <!-- <label for="">Score</label> -->
-
-
                         <input class="score" type="number" name="score" required value="0">
+                    </div>
+                    <div>
                         <button type="button" onclick="addScore()">+</button>
 
-
-                        <div>
-
-                        </div>
+                    </div>
+                    <div>
+                        <label class="final"><input type="checkbox" name="final" />Final</label>
                     </div>
                 </div>
 
             </div>
-            <hr>
+            <br>
             <button type="button" onclick="addPlayer()">Add Player</button>
+            <br>
+            <button type="button" onclick="reset()">Reset</button>
             <!-- a submit button -->
-            <hr>
+            <br>
             <button type="submit" onclick="submitScore()">Submit Score</button>
             <!-- Message -->
             <div id="message"></div>
@@ -174,8 +194,9 @@
     <script>
         //add 1 score to the player
         function addScore() {
-            //find score input and add 1
-            let scoreInput = event.target.previousElementSibling;
+            //find score input and add 1 - the button is in a peer div with the score input
+            let parentDiv = event.target.parentElement.parentElement;
+            let scoreInput = parentDiv.querySelector('input[name="score"]');
             scoreInput.value = parseInt(scoreInput.value) + 1;
 
         }
@@ -190,20 +211,19 @@
                     <div>
                         <!-- <label for="">Name</label> -->
                         <input class="name" type="text" name="name" required placeholder="Name">
+
                         
-                            <label><input type="checkbox" name="final" />Final</label>
                     </div>
                     <div>
                         <!-- <label for="">Score</label> -->
-
-
                         <input class="score" type="number" name="score" required value="0">
+                    </div>
+                    <div>
                         <button type="button" onclick="addScore()">+</button>
 
-
-                        <div>
-
-                        </div>
+                    </div>
+                    <div>
+                        <label class="final"><input type="checkbox" name="final" />Final</label>
                     </div>
                 </div>
             `;
@@ -211,7 +231,14 @@
 
 
         }
-
+        //reset
+        function reset() {
+            //reset all score inputs to 0
+            let scoreInputs = document.querySelectorAll('.score');
+            scoreInputs.forEach(input => {
+                input.value = 0;
+            });
+        }
         //submit the score
         async function submitScore() {
             event.preventDefault(); // Prevent form submission
@@ -253,14 +280,14 @@
 
             // google.script.run.AddRecord(scores); 
 
-           
+
             try {
                 //if host on google apps script, use google.script.run - check if url contains script.google.com
                 if (window.location.href.indexOf("script.google.com") > -1) {
                     //use google.script.run
                     google.script.run.AddRecord(scores);
-                }else{
-                     //send to google apps script as raw post as json
+                } else {
+                    //send to google apps script as raw post as json
                     await sendData(scores);
                 }
             } catch (e) {
